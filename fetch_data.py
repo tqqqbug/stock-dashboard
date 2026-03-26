@@ -37,32 +37,82 @@ def pct_change(closes):
 
 data = {"updated": datetime.utcnow().isoformat() + "Z"}
 
-# ── 1. US Fear & Greed (VIX + RSI + SMA + 모멘텀 자체 계산) ──────────────────
-# CNN API는 서버 요청을 차단하므로, 보유 지표로 직접 계산
-def calc_fg_us(vix, rsi, price, sma200, spy_closes):
-    if vix is None or rsi is None:
-        return None, "N/A"
-    # VIX: 낮을수록 탐욕 (정상 12~15, 공포 25+, 극도공포 40+)
-    vix_score = max(0, min(100, (40 - vix) / 28 * 100))
-    # RSI: 그대로 활용
-    rsi_score = rsi
-    # SMA: 가격이 200일선 위면 탐욕
-    sma_score = 65 if (price and sma200 and price > sma200) else 35
-    # 1개월 모멘텀
-    momentum_score = 50
-    if spy_closes and len(spy_closes) >= 21:
-        mom = (spy_closes[-1] - spy_closes[-21]) / spy_closes[-21] * 100
-        momentum_score = max(0, min(100, 50 + mom * 4))
-    # 가중 평균
-    score = round(vix_score * 0.35 + rsi_score * 0.30 + sma_score * 0.15 + momentum_score * 0.20)
+# ── 1. US Fear & Greed (CNN 방식 근사 계산) ───────────────────────────────────
+# CNN은 7가지 지표를 사용하며, 각 지표를 52주 범위로 정규화함
+# 여기서는 수집 가능한 4가지 핵심 지표로 근사
+def normalize_to_100(value, min_val, max_val, invert=False):
+    """값을 0~100 범위로 정규화. invert=True면 높을수록 낮은 점수(공포)"""
+    if min_val == max_val:
+        return 50
+    score = (value - min_val) / (max_val - min_val) * 100
     score = max(0, min(100, score))
+    return round(100 - score if invert else score, 2)
+
+def calc_fg_us(vix_closes, rsi, qqq_closes, spy_closes):
+    scores = []
+
+    # ① VIX vs 50일 이평선 (CNN 방식: 상대적 변동성)
+    # VIX가 MA보다 높을수록 공포
+    if vix_closes and len(vix_closes) >= 50:
+        vix_now = vix_closes[-1]
+        vix_ma50 = sum(vix_closes[-50:]) / 50
+        ratio = vix_now / vix_ma50   # 1.0 = 평균, >1 = 공포
+        # ratio: 0.5(극도탐욕) ~ 2.0(극도공포) → 0~100으로 변환
+        vix_score = max(0, min(100, (2.0 - ratio) / 1.5 * 100))
+        scores.append(vix_score * 0.30)
+
+    # ② 125일 모멘텀 (CNN: S&P500 vs 125일 MA)
+    if spy_closes and len(spy_closes) >= 125:
+        ma125 = sum(spy_closes[-125:]) / 125
+        pct = (spy_closes[-1] - ma125) / ma125 * 100
+        # -15%(극도공포) ~ +15%(극도탐욕) → 0~100
+        mom_score = max(0, min(100, 50 + pct * 3.3))
+        scores.append(mom_score * 0.25)
+
+    # ③ RSI (과매도=공포, 과매수=탐욕)
+    if rsi is not None:
+        scores.append(rsi * 0.25)
+
+    # ④ QQQ vs 200일 SMA (추세 강도)
+    if qqq_closes and len(qqq_closes) >= 200:
+        sma200 = sum(qqq_closes[-200:]) / 200
+        pct = (qqq_closes[-1] - sma200) / sma200 * 100
+        # -10% ~ +10% → 0~100
+        sma_score = max(0, min(100, 50 + pct * 5))
+        scores.append(sma_score * 0.20)
+
+    if not scores:
+        return None, "N/A"
+
+    score = round(sum(scores) / (0.30 + 0.25 + 0.25 + 0.20) * (1 / max(len(scores)/4, 1) + (len(scores)-1)/4))
+    # 실제 가중합 재계산
+    weights = [0.30, 0.25, 0.25, 0.20]
+    raw_scores = []
+    if vix_closes and len(vix_closes) >= 50:
+        vix_now = vix_closes[-1]; vix_ma50 = sum(vix_closes[-50:]) / 50
+        raw_scores.append((max(0, min(100, (2.0 - vix_now/vix_ma50) / 1.5 * 100)), weights[0]))
+    if spy_closes and len(spy_closes) >= 125:
+        ma125 = sum(spy_closes[-125:]) / 125
+        pct = (spy_closes[-1] - ma125) / ma125 * 100
+        raw_scores.append((max(0, min(100, 50 + pct * 3.3)), weights[1]))
+    if rsi is not None:
+        raw_scores.append((rsi, weights[2]))
+    if qqq_closes and len(qqq_closes) >= 200:
+        sma200 = sum(qqq_closes[-200:]) / 200
+        pct = (qqq_closes[-1] - sma200) / sma200 * 100
+        raw_scores.append((max(0, min(100, 50 + pct * 5)), weights[3]))
+
+    total_w = sum(w for _, w in raw_scores)
+    score = round(sum(s * w for s, w in raw_scores) / total_w) if total_w > 0 else 50
+    score = max(0, min(100, score))
+
     if score <= 25:   label = "Extreme Fear"
     elif score <= 45: label = "Fear"
     elif score <= 55: label = "Neutral"
     elif score <= 75: label = "Greed"
     else:             label = "Extreme Greed"
     return score, label
-# 계산은 QQQ/SPY/VIX 수집 후에 처리 (아래에서 호출)
+
 data["fg_us"] = {"value": None, "label": "N/A"}
 
 # ── 2. Crypto Fear & Greed (Alternative.me) ───────────────────────────────────
@@ -199,12 +249,10 @@ except Exception as e:
     data["put_call"] = {"value": None}
 
 # ── 14. US Fear & Greed 최종 계산 (모든 지표 수집 후) ────────────────────────
-vix_val   = data["vix"]["value"]
-rsi_val   = data["qqq"].get("rsi")
-qqq_price = data["qqq"].get("price")
-sma200    = data["qqq"].get("sma200")
-fg_val, fg_label = calc_fg_us(vix_val, rsi_val, qqq_price, sma200, spy_closes)
+rsi_val = data["qqq"].get("rsi")
+fg_val, fg_label = calc_fg_us(vix_closes, rsi_val, qqq_closes, spy_closes)
 data["fg_us"] = {"value": fg_val, "label": fg_label}
+print(f"[INFO] fg_us = {fg_val} ({fg_label})")
 
 with open("data.json", "w", encoding="utf-8") as f:
     json.dump(data, f, ensure_ascii=False, indent=2)
