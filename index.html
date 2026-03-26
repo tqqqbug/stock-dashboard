@@ -477,7 +477,7 @@
     const qqq = d.qqq;
     const qqqAboveSma = qqq?.price && qqq?.sma200 ? qqq.price >= qqq.sma200 : null;
     setVal('qqq-val', fmt(qqq?.price), qqq?.change_pct >= 0 ? 'green' : 'red');
-    setDesc('qqq-desc', qqq?.price ? (qqqAboveSma ? '200일 이평선 상단' : 'QQQ 하락 추세'),
+    setDesc('qqq-desc', qqq?.price ? (qqqAboveSma ? '200일 이평선 상단' : 'QQQ 하락 추세') : 'N/A',
       qqqAboveSma ? 'green' : 'red');
 
     // ── 200-day SMA ──
