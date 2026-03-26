@@ -37,18 +37,33 @@ def pct_change(closes):
 
 data = {"updated": datetime.utcnow().isoformat() + "Z"}
 
-# ── 1. US Fear & Greed (CNN) ──────────────────────────────────────────────────
-try:
-    r = requests.get(
-        "https://production.dataviz.cnn.io/index/fearandgreed/graphdata",
-        headers={"User-Agent": "Mozilla/5.0"},
-        timeout=10,
-    )
-    fg = r.json()["fear_and_greed"]
-    data["fg_us"] = {"value": round(fg["score"]), "label": fg["rating"]}
-except Exception as e:
-    print(f"[WARN] fg_us: {e}")
-    data["fg_us"] = {"value": None, "label": "N/A"}
+# ── 1. US Fear & Greed (VIX + RSI + SMA + 모멘텀 자체 계산) ──────────────────
+# CNN API는 서버 요청을 차단하므로, 보유 지표로 직접 계산
+def calc_fg_us(vix, rsi, price, sma200, spy_closes):
+    if vix is None or rsi is None:
+        return None, "N/A"
+    # VIX: 낮을수록 탐욕 (정상 12~15, 공포 25+, 극도공포 40+)
+    vix_score = max(0, min(100, (40 - vix) / 28 * 100))
+    # RSI: 그대로 활용
+    rsi_score = rsi
+    # SMA: 가격이 200일선 위면 탐욕
+    sma_score = 65 if (price and sma200 and price > sma200) else 35
+    # 1개월 모멘텀
+    momentum_score = 50
+    if spy_closes and len(spy_closes) >= 21:
+        mom = (spy_closes[-1] - spy_closes[-21]) / spy_closes[-21] * 100
+        momentum_score = max(0, min(100, 50 + mom * 4))
+    # 가중 평균
+    score = round(vix_score * 0.35 + rsi_score * 0.30 + sma_score * 0.15 + momentum_score * 0.20)
+    score = max(0, min(100, score))
+    if score <= 25:   label = "Extreme Fear"
+    elif score <= 45: label = "Fear"
+    elif score <= 55: label = "Neutral"
+    elif score <= 75: label = "Greed"
+    else:             label = "Extreme Greed"
+    return score, label
+# 계산은 QQQ/SPY/VIX 수집 후에 처리 (아래에서 호출)
+data["fg_us"] = {"value": None, "label": "N/A"}
 
 # ── 2. Crypto Fear & Greed (Alternative.me) ───────────────────────────────────
 try:
@@ -164,19 +179,32 @@ if ks_closes:
 else:
     data["fg_kr"] = {"value": None, "label": "N/A"}
 
-# ── 13. Put/Call Ratio (CBOE) ─────────────────────────────────────────────────
+# ── 13. Put/Call Ratio (SPY 옵션 데이터로 계산) ───────────────────────────────
 try:
-    r = requests.get(
-        "https://cdn.cboe.com/api/global/us_indices/daily_prices/PC_TOTAL.csv",
-        timeout=10,
-    )
-    lines = r.text.strip().split("\n")
-    # CSV: DATE,PC_RATIO
-    last = lines[-1].split(",")
-    data["put_call"] = {"value": float(last[1])}
+    spy_ticker = yf.Ticker("SPY")
+    expirations = spy_ticker.options          # 만기일 목록
+    if expirations:
+        chain = spy_ticker.option_chain(expirations[0])
+        put_vol  = chain.puts["volume"].dropna().sum()
+        call_vol = chain.calls["volume"].dropna().sum()
+        if call_vol > 0:
+            pc = round(put_vol / call_vol, 3)
+            data["put_call"] = {"value": pc}
+        else:
+            data["put_call"] = {"value": None}
+    else:
+        data["put_call"] = {"value": None}
 except Exception as e:
     print(f"[WARN] put_call: {e}")
     data["put_call"] = {"value": None}
+
+# ── 14. US Fear & Greed 최종 계산 (모든 지표 수집 후) ────────────────────────
+vix_val   = data["vix"]["value"]
+rsi_val   = data["qqq"].get("rsi")
+qqq_price = data["qqq"].get("price")
+sma200    = data["qqq"].get("sma200")
+fg_val, fg_label = calc_fg_us(vix_val, rsi_val, qqq_price, sma200, spy_closes)
+data["fg_us"] = {"value": fg_val, "label": fg_label}
 
 with open("data.json", "w", encoding="utf-8") as f:
     json.dump(data, f, ensure_ascii=False, indent=2)
