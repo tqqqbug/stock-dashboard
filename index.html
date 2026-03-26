@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>주식 시장 대시보드</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0f1117;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.4rem;
+      margin-bottom: 20px;
+      color: #fff;
+      letter-spacing: 1px;
+    }
+
+    /* ─── FEAR & GREED ─── */
+    .fg-section {
+      background: #1a1d27;
+      border-radius: 14px;
+      padding: 20px 24px 16px;
+      max-width: 900px;
+      margin: 0 auto 16px;
+    }
+    .fg-section-title {
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    /* ─── GAUGES ─── */
+    .gauge-row {
+      display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .gauge-card {
+      background: #252836;
+      border-radius: 12px;
+      padding: 16px 20px 12px;
+      flex: 1; min-width: 200px; max-width: 220px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .gauge-label {
+      font-size: .72rem; color: #9399a6;
+      margin-bottom: 4px; align-self: flex-start;
+    }
+    .gauge-svg { width: 140px; height: 80px; }
+    .gauge-value {
+      font-size: 2.2rem; font-weight: 800;
+      line-height: 1; margin-top: 4px;
+    }
+    .gauge-state { font-size: .78rem; color: #9399a6; margin-top: 2px; }
+
+    /* legend */
+    .legend {
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+      font-size: .68rem;
+    }
+    .legend span {
+      border-radius: 4px; padding: 2px 8px; font-weight: 600;
+    }
+    .leg-extreme-fear { background:#b71c1c; color:#fff; }
+    .leg-fear         { background:#e53935; color:#fff; }
+    .leg-neutral      { background:#f9a825; color:#000; }
+    .leg-greed        { background:#2e7d32; color:#fff; }
+    .leg-extreme-greed{ background:#1b5e20; color:#fff; }
+
+    /* ─── MAIN GRID ─── */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    @media(max-width:600px){ .dashboard { grid-template-columns: 1fr; } }
+
+    /* ─── CARDS ─── */
+    .card {
+      background: #1a1d27;
+      border-radius: 14px;
+      padding: 18px 20px;
+    }
+    .card-header {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .card-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg,#6c63ff,#48cfad);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .card-title { font-size: 1rem; font-weight: 700; }
+    .card-sub   { font-size: .72rem; color: #6b7280; margin-top: 2px; }
+
+    /* badge */
+    .badge {
+      margin-left: auto;
+      background: #1e3a5f; color: #60a5fa;
+      border-radius: 6px; padding: 2px 8px;
+      font-size: .72rem; font-weight: 600;
+    }
+    .badge-orange { background:#3d2200; color:#fb923c; }
+
+    /* rows */
+    .row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 9px 0; border-bottom: 1px solid #262b36;
+    }
+    .row:last-child { border-bottom: none; }
+    .row-label { font-size: .82rem; color: #9ca3af; }
+    .row-right  { text-align: right; }
+    .row-value  { font-size: .95rem; font-weight: 700; }
+    .row-desc   { font-size: .7rem; color: #6b7280; margin-top: 1px; }
+
+    .green  { color: #4ade80; }
+    .red    { color: #f87171; }
+    .yellow { color: #fbbf24; }
+    .orange { color: #fb923c; }
+
+    /* pizza index bar */
+    .pizza-row { flex-direction: column; align-items: flex-start; }
+    .pizza-header { display:flex; width:100%; justify-content:space-between; margin-bottom:6px; }
+    .pizza-bar { display:flex; gap:3px; width:100%; }
+    .pizza-seg { height: 8px; border-radius: 2px; flex: 1; }
+    .pizza-numbers { display:flex; gap:3px; width:100%; margin-top:3px; }
+    .pizza-numbers span { flex:1; text-align:center; font-size:.6rem; color:#6b7280; }
+    .pizza-axis { display:flex; justify-content:space-between; font-size:.6rem; color:#6b7280; margin-top:2px; width:100%; }
+
+    /* timestamp */
+    .timestamp {
+      text-align: center; font-size: .7rem;
+      color: #4b5563; margin-top: 16px;
+    }
+
+    /* loading pulse */
+    .skeleton {
+      display: inline-block;
+      background: linear-gradient(90deg, #252836 25%, #2f3347 50%, #252836 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: 4px;
+      height: 1em; width: 4em;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>📊 주식 시장 대시보드</h1>
+
+<!-- FEAR & GREED -->
+<div class="fg-section">
+  <div class="fg-section-title">공포 &amp; 탐욕 지수</div>
+  <div class="gauge-row">
+    <!-- US -->
+    <div class="gauge-card">
+      <div class="gauge-label">🇺🇸 미국 증시</div>
+      <svg class="gauge-svg" viewBox="0 0 140 80">
+        <defs>
+          <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stop-color="#b71c1c"/>
+            <stop offset="30%"  stop-color="#e53935"/>
+            <stop offset="55%"  stop-color="#f9a825"/>
+            <stop offset="75%"  stop-color="#2e7d32"/>
+            <stop offset="100%" stop-color="#1b5e20"/>
+          </linearGradient>
+        </defs>
+        <path d="M15 75 A55 55 0 0 1 125 75" fill="none" stroke="#2a2d3a" stroke-width="12" stroke-linecap="round"/>
+        <path d="M15 75 A55 55 0 0 1 125 75" fill="none" stroke="url(#arcGrad)" stroke-width="12" stroke-linecap="round"/>
+        <line id="needle-us" x1="70" y1="75" x2="70" y2="30" stroke="#ff4d4d" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90, 70, 75)"/>
+        <circle cx="70" cy="75" r="4" fill="#ff4d4d"/>
+      </svg>
+      <div class="gauge-value" id="val-us">—</div>
+      <div class="gauge-state" id="state-us">로딩 중...</div>
+    </div>
+    <!-- Crypto -->
+    <div class="gauge-card">
+      <div class="gauge-label">₿ 크립토</div>
+      <svg class="gauge-svg" viewBox="0 0 140 80">
+        <path d="M15 75 A55 55 0 0 1 125 75" fill="none" stroke="#2a2d3a" stroke-width="12" stroke-linecap="round"/>
+        <path d="M15 75 A55 55 0 0 1 125 75" fill="none" stroke="url(#arcGrad)" stroke-width="12" stroke-linecap="round"/>
+        <line id="needle-crypto" x1="70" y1="75" x2="70" y2="30" stroke="#ff4d4d" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90, 70, 75)"/>
+        <circle cx="70" cy="75" r="4" fill="#ff4d4d"/>
+      </svg>
+      <div class="gauge-value" id="val-crypto">—</div>
+      <div class="gauge-state" id="state-crypto">로딩 중...</div>
+    </div>
+    <!-- Korea -->
+    <div class="gauge-card">
+      <div class="gauge-label">🇰🇷 한국 증시</div>
+      <svg class="gauge-svg" viewBox="0 0 140 80">
+        <path d="M15 75 A55 55 0 0 1 125 75" fill="none" stroke="#2a2d3a" stroke-width="12" stroke-linecap="round"/>
+        <path d="M15 75 A55 55 0 0 1 125 75" fill="none" stroke="url(#arcGrad)" stroke-width="12" stroke-linecap="round"/>
+        <line id="needle-kr" x1="70" y1="75" x2="70" y2="30" stroke="#ff4d4d" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90, 70, 75)"/>
+        <circle cx="70" cy="75" r="4" fill="#ff4d4d"/>
+      </svg>
+      <div class="gauge-value" id="val-kr">—</div>
+      <div class="gauge-state" id="state-kr">로딩 중...</div>
+    </div>
+  </div>
+  <div class="legend">
+    <span class="leg-extreme-fear">0-25 극도공포</span>
+    <span class="leg-fear">25-45 공포</span>
+    <span class="leg-neutral">45-55 중립</span>
+    <span class="leg-greed">55-75 탐욕</span>
+    <span class="leg-extreme-greed">75-100 극도탐욕</span>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard">
+
+  <!-- 시장 심리 지표 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">📈</div>
+      <div>
+        <div class="card-title">시장 심리 지표</div>
+        <div class="card-sub">주요 시장 심리 및 기술적 지표</div>
+      </div>
+      <div class="badge badge-orange" id="fomc-badge">FOMC</div>
+    </div>
+
+    <div class="row">
+      <span class="row-label">Put/Call Ratio</span>
+      <div class="row-right">
+        <div class="row-value" id="pc-val">—</div>
+        <div class="row-desc" id="pc-desc">—</div>
+      </div>
+    </div>
+    <div class="row">
+      <span class="row-label">QQQ Price</span>
+      <div class="row-right">
+        <div class="row-value" id="qqq-val">—</div>
+        <div class="row-desc" id="qqq-desc">—</div>
+      </div>
+    </div>
+    <div class="row">
+      <span class="row-label">200-day SMA</span>
+      <div class="row-right">
+        <div class="row-value" id="sma-val">—</div>
+        <div class="row-desc" id="sma-desc">—</div>
+      </div>
+    </div>
+    <div class="row">
+      <span class="row-label">VIX</span>
+      <div class="row-right">
+        <div class="row-value" id="vix-val">—</div>
+        <div class="row-desc" id="vix-desc">—</div>
+      </div>
+    </div>
+    <div class="row">
+      <span class="row-label">RSI</span>
+      <div class="row-right">
+        <div class="row-value" id="rsi-val">—</div>
+        <div class="row-desc" id="rsi-desc">—</div>
+      </div>
+    </div>
+    <div class="row">
+      <span class="row-label">S&amp;P 500 (SPY)</span>
+      <div class="row-right">
+        <div class="row-value" id="spy-val">—</div>
+        <div class="row-desc" id="spy-desc">—</div>
+      </div>
+    </div>
+    <div class="row">
+      <span class="row-label">NASDAQ 100</span>
+      <div class="row-right">
+        <div class="row-value" id="ndx-val">—</div>
+        <div class="row-desc" id="ndx-desc">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 시장 동향 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">🌍</div>
+      <div>
+        <div class="card-title">시장 동향</div>
+        <div class="card-sub">주요 지수 및 섹터별 동향 분석</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <div class="row-label">달러 환율</div>
+        <div class="row-desc" id="usdkrw-subdesc">원화 약세 여부</div>
+      </div>
+      <div class="row-right">
+        <div class="row-value" id="usdkrw-val">—</div>
+        <div class="row-desc" id="usdkrw-desc">—</div>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <div class="row-label">엔 환율 (100엔)</div>
+        <div class="row-desc" id="jpykrw-subdesc">엔화 강세 여부</div>
+      </div>
+      <div class="row-right">
+        <div class="row-value" id="jpykrw-val">—</div>
+        <div class="row-desc" id="jpykrw-desc">—</div>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <div class="row-label">Gold (금)</div>
+        <div class="row-desc" id="gold-subdesc">—</div>
+      </div>
+      <div class="row-right">
+        <div class="row-value" id="gold-val">—</div>
+        <div class="row-desc" id="gold-desc">—</div>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <div class="row-label">WTI 유가</div>
+        <div class="row-desc" id="oil-subdesc">—</div>
+      </div>
+      <div class="row-right">
+        <div class="row-value" id="oil-val">—</div>
+        <div class="row-desc" id="oil-desc">—</div>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <div class="row-label">Bitcoin</div>
+        <div class="row-desc" id="btc-subdesc">—</div>
+      </div>
+      <div class="row-right">
+        <div class="row-value" id="btc-val">—</div>
+        <div class="row-desc" id="btc-desc">—</div>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <div class="row-label">Ethereum</div>
+        <div class="row-desc" style="color:#6b7280;"></div>
+      </div>
+      <div class="row-right">
+        <div class="row-value" id="eth-val">—</div>
+        <div class="row-desc" id="eth-desc">—</div>
+      </div>
+    </div>
+
+    <!-- Pizza Index (static) -->
+    <div class="row pizza-row" style="padding-top:12px;">
+      <div class="pizza-header">
+        <span style="font-size:.78rem;color:#9ca3af;">🍕 펜타곤 피자 지수</span>
+        <span style="font-size:.78rem;font-weight:700;color:#fbbf24;">DOUGHCON 4 주의</span>
+      </div>
+      <div class="pizza-bar">
+        <div class="pizza-seg" style="background:#22c55e;"></div>
+        <div class="pizza-seg" style="background:#a3e635;"></div>
+        <div class="pizza-seg" style="background:#fbbf24;border:2px solid #fff;"></div>
+        <div class="pizza-seg" style="background:#f97316;opacity:.5;"></div>
+        <div class="pizza-seg" style="background:#ef4444;opacity:.5;"></div>
+      </div>
+      <div class="pizza-numbers">
+        <span>5</span><span>4 ◀</span><span>3</span><span>2</span><span>1</span>
+      </div>
+      <div class="pizza-axis">
+        <span>← 안전</span>
+        <span style="font-size:.58rem;color:#4b5563;">pizzaint.watch ↗</span>
+        <span>위기 →</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="timestamp" id="ts">데이터 로딩 중...</div>
+
+<script>
+  // ── 유틸리티 ──────────────────────────────────────────────────────────────
+
+  function fgColor(val) {
+    if (val === null) return '#9399a6';
+    if (val <= 25) return '#f87171';
+    if (val <= 45) return '#fb923c';
+    if (val <= 55) return '#fbbf24';
+    if (val <= 75) return '#4ade80';
+    return '#22c55e';
+  }
+
+  function fgLabel(en) {
+    const map = {
+      'Extreme Fear': '극도 공포',
+      'Fear': '공포',
+      'Neutral': '중립',
+      'Greed': '탐욕',
+      'Extreme Greed': '극도 탐욕',
+    };
+    return map[en] || en;
+  }
+
+  function setGauge(id, val, label) {
+    const rotation = val !== null ? (-180 + val * 1.8) : -90;
+    document.getElementById(`needle-${id}`)
+      .setAttribute('transform', `rotate(${rotation}, 70, 75)`);
+    const valEl = document.getElementById(`val-${id}`);
+    valEl.textContent = val !== null ? val : 'N/A';
+    valEl.style.color = fgColor(val);
+    document.getElementById(`state-${id}`).textContent = fgLabel(label);
+  }
+
+  function colorClass(pct) {
+    return pct >= 0 ? 'green' : 'red';
+  }
+
+  function setVal(id, text, cls) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'row-value ' + (cls || '');
+  }
+
+  function setDesc(id, text, cls) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'row-desc ' + (cls || '');
+  }
+
+  function fmt(num, decimals = 2) {
+    if (num === null || num === undefined) return 'N/A';
+    return Number(num).toLocaleString('ko-KR', { maximumFractionDigits: decimals });
+  }
+
+  function pctStr(pct) {
+    if (pct === null || pct === undefined) return '';
+    return (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+  }
+
+  // ── 메인 로드 ─────────────────────────────────────────────────────────────
+
+  async function loadData() {
+    let d;
+    try {
+      const res = await fetch('data.json?t=' + Date.now());
+      d = await res.json();
+    } catch (e) {
+      document.getElementById('ts').textContent = '데이터를 불러오지 못했습니다. (data.json 없음)';
+      return;
+    }
+
+    // Fear & Greed
+    setGauge('us',     d.fg_us?.value,     d.fg_us?.label    || 'N/A');
+    setGauge('crypto', d.fg_crypto?.value,  d.fg_crypto?.label || 'N/A');
+    setGauge('kr',     d.fg_kr?.value,      d.fg_kr?.label    || 'N/A');
+
+    // ── Put/Call Ratio ──
+    const pc = d.put_call?.value;
+    setVal('pc-val', pc !== null && pc !== undefined ? pc.toFixed(3) : 'N/A',
+      pc !== null ? (pc < 0.7 ? 'green' : pc < 1.0 ? 'yellow' : 'red') : '');
+    setDesc('pc-desc', pc !== null && pc !== undefined
+      ? (pc < 0.7 ? '과도 낙관 (주의)' : pc < 1.0 ? '중립 심리 (관망)' : '공포 심리 (매수 신호)')
+      : 'N/A');
+
+    // ── QQQ ──
+    const qqq = d.qqq;
+    const qqqAboveSma = qqq?.price && qqq?.sma200 ? qqq.price >= qqq.sma200 : null;
+    setVal('qqq-val', fmt(qqq?.price), qqq?.change_pct >= 0 ? 'green' : 'red');
+    setDesc('qqq-desc', qqq?.price ? (qqqAboveSma ? '200일 이평선 상단' : 'QQQ 하락 추세'),
+      qqqAboveSma ? 'green' : 'red');
+
+    // ── 200-day SMA ──
+    setVal('sma-val', fmt(qqq?.sma200), qqqAboveSma ? 'green' : 'red');
+    setDesc('sma-desc', qqq?.sma200 ? (qqqAboveSma ? 'QQQ 상승 추세' : 'QQQ 하락 추세') : 'N/A',
+      qqqAboveSma ? 'green' : 'red');
+
+    // ── VIX ──
+    const vix = d.vix?.value;
+    setVal('vix-val', fmt(vix),
+      vix !== null ? (vix >= 30 ? 'yellow' : vix >= 20 ? 'orange' : 'green') : '');
+    setDesc('vix-desc', vix !== null
+      ? (vix >= 30 ? '높은 변동성 (매수 신호)' : vix >= 20 ? '중간 변동성' : '낮은 변동성')
+      : 'N/A');
+
+    // ── RSI ──
+    const rsi = qqq?.rsi;
+    setVal('rsi-val', rsi !== null && rsi !== undefined ? rsi.toFixed(2) : 'N/A',
+      rsi !== null ? (rsi <= 30 ? 'yellow' : rsi >= 70 ? 'red' : 'green') : '');
+    setDesc('rsi-desc', rsi !== null
+      ? (rsi <= 30 ? '과매도 (매수 신호)' : rsi >= 70 ? '과매수 (주의)' : '정상 구간')
+      : 'N/A');
+
+    // ── SPY ──
+    const spy = d.spy;
+    setVal('spy-val', fmt(spy?.price), spy?.change_pct >= 0 ? 'green' : 'red');
+    setDesc('spy-desc', spy?.change_pct !== null ? pctStr(spy.change_pct) : 'N/A',
+      spy?.change_pct >= 0 ? 'green' : 'red');
+
+    // ── NDX ──
+    const ndx = d.ndx;
+    setVal('ndx-val', fmt(ndx?.price, 0), ndx?.change_pct >= 0 ? 'green' : 'red');
+    setDesc('ndx-desc', ndx?.change_pct !== null ? pctStr(ndx.change_pct) : 'N/A',
+      ndx?.change_pct >= 0 ? 'green' : 'red');
+
+    // ── USD/KRW ──
+    const usd = d.usdkrw;
+    setVal('usdkrw-val', usd?.price ? fmt(usd.price, 0) + '원' : 'N/A',
+      usd?.change_pct >= 0 ? 'green' : 'red');
+    setDesc('usdkrw-desc', usd?.change_pct !== null ? pctStr(usd.change_pct) : 'N/A',
+      usd?.change_pct >= 0 ? 'green' : 'red');
+    document.getElementById('usdkrw-subdesc').textContent =
+      usd?.change_pct >= 0 ? '원화 약세 (부정적)' : '원화 강세 (긍정적)';
+
+    // ── JPY/KRW ──
+    const jpy = d.jpykrw;
+    setVal('jpykrw-val', jpy?.price ? fmt(jpy.price, 0) + '원' : 'N/A',
+      jpy?.change_pct >= 0 ? 'green' : 'red');
+    setDesc('jpykrw-desc', jpy?.change_pct !== null ? pctStr(jpy.change_pct) : 'N/A',
+      jpy?.change_pct >= 0 ? 'green' : 'red');
+    document.getElementById('jpykrw-subdesc').textContent =
+      jpy?.change_pct < 0 ? '엔화 약세' : '엔화 강세 (긍정적)';
+
+    // ── Gold ──
+    const gold = d.gold;
+    setVal('gold-val', gold?.price ? '$' + fmt(gold.price) : 'N/A',
+      gold?.change_pct >= 0 ? 'green' : 'red');
+    setDesc('gold-desc', gold?.change_pct !== null ? pctStr(gold.change_pct) : 'N/A',
+      gold?.change_pct >= 0 ? 'green' : 'red');
+    document.getElementById('gold-subdesc').textContent =
+      gold?.change_pct >= 0 ? '상승 추세' : '하락 추세';
+
+    // ── WTI Oil ──
+    const oil = d.oil;
+    setVal('oil-val', oil?.price ? '$' + fmt(oil.price) : 'N/A',
+      oil?.change_pct >= 0 ? 'green' : 'red');
+    setDesc('oil-desc', oil?.change_pct !== null ? pctStr(oil.change_pct) : 'N/A',
+      oil?.change_pct >= 0 ? 'green' : 'red');
+    document.getElementById('oil-subdesc').textContent =
+      oil?.change_pct >= 0 ? '상승 추세' : '하락 추세';
+
+    // ── Bitcoin ──
+    const btc = d.bitcoin;
+    setVal('btc-val', btc?.price ? '$' + fmt(btc.price, 0) : 'N/A',
+      btc?.change_pct >= 0 ? 'green' : 'red');
+    setDesc('btc-desc', btc?.change_pct !== null ? pctStr(btc.change_pct) : 'N/A',
+      btc?.change_pct >= 0 ? 'green' : 'red');
+    document.getElementById('btc-subdesc').textContent =
+      btc?.change_pct !== null
+        ? (Math.abs(btc.change_pct) < 1 ? '중립' : btc.change_pct >= 0 ? '상승 추세' : '하락 추세')
+        : '';
+
+    // ── Ethereum ──
+    const eth = d.ethereum;
+    setVal('eth-val', eth?.price ? '$' + fmt(eth.price, 0) : 'N/A',
+      eth?.change_pct >= 0 ? 'green' : 'red');
+    setDesc('eth-desc', eth?.change_pct !== null ? pctStr(eth.change_pct) : 'N/A',
+      eth?.change_pct >= 0 ? 'green' : 'red');
+
+    // ── Timestamp ──
+    const ts = d.updated ? new Date(d.updated) : new Date();
+    document.getElementById('ts').textContent =
+      '마지막 업데이트: ' + ts.toLocaleString('ko-KR') + ' (UTC 기준)';
+  }
+
+  loadData();
+  // 5분마다 자동 새로고침
+  setInterval(loadData, 5 * 60 * 1000);
+</script>
+</body>
+</html>
