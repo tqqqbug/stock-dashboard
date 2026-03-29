@@ -1,7 +1,7 @@
 {
-  "updated": "2026-03-29T15:49:34.846719Z",
+  "updated": "2026-03-29T17:04:44.474132Z",
   "fg_us": {
-    "value": 30,
+    "value": 31,
     "label": "Fear"
   },
   "fg_crypto": {
@@ -9,17 +9,17 @@
     "label": "Extreme Fear"
   },
   "bitcoin": {
-    "price": 66401,
-    "change_pct": -0.87
+    "price": 66437,
+    "change_pct": -0.71
   },
   "ethereum": {
-    "price": 1989.76,
-    "change_pct": -1.76
+    "price": 1995.88,
+    "change_pct": -1.43
   },
   "qqq": {
     "price": 562.58,
-    "sma200": 593.31,
-    "rsi": 29.93,
+    "sma200": 592.58,
+    "rsi": 30.36,
     "change_pct": -1.95
   },
   "spy": {
