@@ -1,5 +1,5 @@
 {
-  "updated": "2026-04-05T00:02:45.279534Z",
+  "updated": "2026-04-05T05:57:52.103388Z",
   "fg_us": {
     "value": 49,
     "label": "Neutral"
@@ -9,12 +9,12 @@
     "label": "Extreme Fear"
   },
   "bitcoin": {
-    "price": 67304,
-    "change_pct": 0.6
+    "price": 66954,
+    "change_pct": 0.08
   },
   "ethereum": {
-    "price": 2065.13,
-    "change_pct": 0.64
+    "price": 2048.35,
+    "change_pct": -0.25
   },
   "qqq": {
     "price": 584.98,
@@ -34,12 +34,12 @@
     "change_pct": 0.11
   },
   "gold": {
-    "price": 4651.5,
-    "change_pct": -2.75
+    "price": 4702.7,
+    "change_pct": -1.68
   },
   "oil": {
-    "price": 111.54,
-    "change_pct": 11.41
+    "price": 112.06,
+    "change_pct": 11.93
   },
   "usdkrw": {
     "price": 1510.54,
