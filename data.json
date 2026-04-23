@@ -1,5 +1,5 @@
 {
-  "updated": "2026-04-23T21:27:42.922727Z",
+  "updated": "2026-04-23T22:05:56.449155Z",
   "fg_us": {
     "value": 75,
     "label": "Greed"
@@ -9,12 +9,12 @@
     "label": "Fear"
   },
   "bitcoin": {
-    "price": 77871,
-    "change_pct": -0.92
+    "price": 78028,
+    "change_pct": -0.99
   },
   "ethereum": {
-    "price": 2323.5,
-    "change_pct": -3.11
+    "price": 2326.81,
+    "change_pct": -3.19
   },
   "qqq": {
     "price": 651.42,
@@ -42,12 +42,12 @@
     "change_pct": 4.35
   },
   "usdkrw": {
-    "price": 1480.65,
-    "change_pct": -0.35
+    "price": 1479.83,
+    "change_pct": -0.4
   },
   "jpykrw": {
-    "price": 927.93,
-    "change_pct": -0.47
+    "price": 926.94,
+    "change_pct": -0.57
   },
   "fg_kr": {
     "value": 67,
