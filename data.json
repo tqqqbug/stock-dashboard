@@ -1,5 +1,5 @@
 {
-  "updated": "2026-04-23T09:02:53.808909Z",
+  "updated": "2026-04-23T10:44:02.470368Z",
   "fg_us": {
     "value": 77,
     "label": "Extreme Greed"
@@ -9,12 +9,12 @@
     "label": "Fear"
   },
   "bitcoin": {
-    "price": 77858,
-    "change_pct": -0.17
+    "price": 77396,
+    "change_pct": -0.93
   },
   "ethereum": {
-    "price": 2339.56,
-    "change_pct": -2.06
+    "price": 2312.71,
+    "change_pct": -3.26
   },
   "qqq": {
     "price": 655.11,
@@ -27,27 +27,27 @@
     "change_pct": 1.01
   },
   "vix": {
-    "value": 19.63
+    "value": 19.71
   },
   "ndx": {
     "price": 26937.28,
     "change_pct": 1.73
   },
   "gold": {
-    "price": 4722.0,
-    "change_pct": -0.22
+    "price": 4708.7,
+    "change_pct": -0.5
   },
   "oil": {
-    "price": 94.9,
-    "change_pct": 2.09
+    "price": 94.41,
+    "change_pct": 1.56
   },
   "usdkrw": {
-    "price": 1480.88,
-    "change_pct": -0.33
+    "price": 1482.59,
+    "change_pct": -0.22
   },
   "jpykrw": {
-    "price": 927.98,
-    "change_pct": -0.46
+    "price": 928.84,
+    "change_pct": -0.37
   },
   "fg_kr": {
     "value": 68,
