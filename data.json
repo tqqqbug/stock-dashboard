@@ -1,5 +1,5 @@
 {
-  "updated": "2026-04-26T17:56:01.959293Z",
+  "updated": "2026-04-26T18:35:39.785405Z",
   "fg_us": {
     "value": 79,
     "label": "Extreme Greed"
@@ -9,12 +9,12 @@
     "label": "Fear"
   },
   "bitcoin": {
-    "price": 78032,
-    "change_pct": 0.99
+    "price": 78165,
+    "change_pct": 1.03
   },
   "ethereum": {
-    "price": 2348.11,
-    "change_pct": 1.64
+    "price": 2359.6,
+    "change_pct": 2.0
   },
   "qqq": {
     "price": 663.88,
