@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-11T09:53:48.108273Z",
+  "updated": "2026-07-11T10:49:20.623525Z",
   "fg_us": {
     "value": 74,
     "label": "Greed"
@@ -9,12 +9,12 @@
     "label": "Fear"
   },
   "bitcoin": {
-    "price": 64117,
-    "change_pct": -0.37
+    "price": 64121,
+    "change_pct": -0.48
   },
   "ethereum": {
-    "price": 1796.89,
-    "change_pct": 0.35
+    "price": 1797.43,
+    "change_pct": 0.01
   },
   "qqq": {
     "price": 725.51,
@@ -54,6 +54,6 @@
     "label": "Fear"
   },
   "put_call": {
-    "value": 0.887
+    "value": 0.51
   }
 }
