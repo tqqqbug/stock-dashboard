@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-19T15:37:33.717866Z",
+  "updated": "2026-07-19T16:31:41.553138Z",
   "fg_us": {
     "value": 64,
     "label": "Greed"
@@ -9,18 +9,18 @@
     "label": "Fear"
   },
   "bitcoin": {
-    "price": 64487,
-    "change_pct": 0.72
+    "price": 64554,
+    "change_pct": 0.67
   },
   "ethereum": {
-    "price": 1870.2,
-    "change_pct": 1.48
+    "price": 1868.89,
+    "change_pct": 1.4
   },
   "qqq": {
-    "price": null,
-    "sma200": null,
-    "rsi": null,
-    "change_pct": null
+    "price": 695.33,
+    "sma200": 639.53,
+    "rsi": 42.07,
+    "change_pct": -1.5
   },
   "spy": {
     "price": 743.29,
