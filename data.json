@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-29T20:13:26.512198Z",
+  "updated": "2026-09-29T23:41:34.790233Z",
   "fg_us": {
     "value": 70,
     "label": "Greed"
@@ -23,37 +23,37 @@
     "change_pct": 0.19
   },
   "spy": {
-    "price": 764.3,
-    "change_pct": -0.17
+    "price": 764.2,
+    "change_pct": -0.18
   },
   "vix": {
-    "value": 16.09
+    "value": 16.04
   },
   "ndx": {
     "price": 30339.33,
     "change_pct": 0.21
   },
   "gold": {
-    "price": 4207.2,
-    "change_pct": 0.93
+    "price": 4211.7,
+    "change_pct": 1.04
   },
   "oil": {
-    "price": 88.97,
-    "change_pct": -3.92
+    "price": 89.11,
+    "change_pct": -3.77
   },
   "usdkrw": {
-    "price": 1353.21,
-    "change_pct": -0.1
+    "price": 1351.42,
+    "change_pct": -0.6
   },
   "jpykrw": {
-    "price": 857.3,
-    "change_pct": -0.34
+    "price": 856.7,
+    "change_pct": -0.78
   },
   "fg_kr": {
     "value": 51,
     "label": "Neutral"
   },
   "put_call": {
-    "value": 0.931
+    "value": 0.929
   }
 }
