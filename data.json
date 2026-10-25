@@ -1,20 +1,20 @@
 {
-  "updated": "2026-10-24T23:40:53.332418Z",
+  "updated": "2026-10-25T01:36:48.618432Z",
   "fg_us": {
     "value": 52,
     "label": "Neutral"
   },
   "fg_crypto": {
-    "value": 51,
+    "value": 54,
     "label": "Neutral"
   },
   "bitcoin": {
-    "price": 80812,
-    "change_pct": -0.09
+    "price": 80707,
+    "change_pct": -0.03
   },
   "ethereum": {
-    "price": 2356.72,
-    "change_pct": -0.84
+    "price": 2354.89,
+    "change_pct": -0.77
   },
   "qqq": {
     "price": 704.4,
